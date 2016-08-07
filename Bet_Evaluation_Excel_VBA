@@ -1,0 +1,226 @@
+Private Sub CommandButton1_Click()
+
+ Worksheets(1).Range("B1: D500 ").Value = ""
+ Worksheets(1).Range("A40: A500 ").Value = ""
+ Worksheets(2).Range("A:E").Value = ""
+ Worksheets(3).Range("A:E").Value = ""
+ 
+ Worksheets(1).Range("F5").Value = "Start"
+ 
+ Application.ScreenUpdating = False '/ true
+ 
+ pfad = Worksheets(1).Range("I1").Value
+ file = Worksheets(1).Range("I2").Value
+ 
+ Start_Watch = Worksheets(1).Range("I3").Value
+ Player_Watch = Worksheets(1).Range("I4").Value
+ 
+ 'Worksheets(1).Range("A40").Value = "Player"
+ 'Worksheets(1).Range("B40").Value = "Bets"
+ 
+ Worksheets(2).Range("A" & 1).Value = "Wager" '"wager"
+ Worksheets(2).Range("B" & 1).Value = "Win" '"value_win"
+ Worksheets(2).Range("C" & 1).Value = "Profit" '"dBankroll"
+ Worksheets(2).Range("D" & 1).Value = "exp. Profit" '"Sum Bet Volume"
+ Worksheets(2).Range("E" & 1).Value = "Volume (right)" '"Sum Bet Volume"
+
+ 
+ Worksheets(3).Range("A" & 1).Value = "Wager" '"wager"
+ Worksheets(3).Range("B" & 1).Value = "Win" '"value_win"
+ Worksheets(3).Range("C" & 1).Value = "Profit" '"dBankroll"
+ Worksheets(3).Range("D" & 1).Value = "Expected loss" '"Sum Bet Volume"
+ Worksheets(3).Range("E" & 1).Value = "Volume (right)" '"Sum Bet Volume"
+
+ 
+ Close #1
+ Open pfad & "/" & file For Input As #1
+ 
+ Do Until EOF(1)
+
+  Input #1, Textline
+
+  '------------------------------------------ wheelr ------------------------------------
+  Textline = Replace(Textline, Chr(34), "")
+  Textline = Replace(Textline, "{", "")
+  Textline = Replace(Textline, "[", "")
+  
+  If Textline = "type:win" Or Textline = "type:loss" Then
+   ' Start
+   i_bets = i_bets + 1
+   
+   If i_bets > Start_Watch Then
+
+   
+   If Textline = "type:win" Then WinLoss = "Win"
+   If Textline = "type:loss" Then WinLoss = "Loss"
+  
+   '------------------------------------------ Wheelr ------------------------------------
+   
+   Input #1, Wheelr
+   Input #1, Wheelr
+   
+   Wheelr = Replace(Wheelr, Chr(34), "")
+   If Wheelr = ":exp." Then
+    Wheelr = "0"
+   End If
+   
+   Wheelr = Replace(Wheelr, ":", "") * 1 + 1 ' 1 = 0
+   
+   Worksheets(1).Range("B" & Wheelr).Value = Worksheets(1).Range("B" & Wheelr).Value + 1
+
+   Worksheets(1).Range("C1").Value = i_bets
+
+  
+  '------------------------------------------ player ------------------------------------
+  
+   Input #1, Player
+   Input #1, Player
+   
+   Player = Replace(Player, Chr(34), "")
+   Player = Replace(Player, ":", "")
+   
+   Input #1, value_
+   Input #1, value_
+   
+   value_ = Replace(value_, Chr(34), "")
+   value_ = Replace(value_, ":", "")
+   value_ = Replace(value_, ".", ",") * 1
+   
+   If WinLoss = "Win" Then value_win = value_ Else value_win = 0
+   
+   Input #1, blockBet
+   Input #1, blockBet
+   
+   blockBet = Replace(blockBet, Chr(34), "")
+   blockBet = Replace(blockBet, ":", "")
+   blockBet = Replace(blockBet, ".", ",") * 1
+   
+   Input #1, blockSpin
+   Input #1, blockSpin
+   
+   blockSpin = Replace(blockSpin, Chr(34), "")
+   blockSpin = Replace(blockSpin, ":", "")
+   blockSpin = Replace(blockSpin, ".", ",") * 1
+   
+   Input #1, wager
+   Input #1, wager
+   
+   wager = Replace(wager, Chr(34), "")
+   wager = Replace(wager, ":", "") / 10 ^ 18
+   
+   
+   i_player = 0
+   For i = 1 To n_player
+    If Worksheets(5).Range("A" & i).Value = Player Then
+     i_player = i
+     i = n_player + 1
+    End If
+   Next i
+   
+   If i_player > 0 Then
+    Worksheets(5).Range("B" & i_player).Value = Worksheets(5).Range("B" & i_player).Value + 1
+    Worksheets(5).Range("C" & i_player).Value = Worksheets(5).Range("C" & i_player).Value + wager
+    Worksheets(5).Range("D" & i_player).Value = Worksheets(5).Range("D" & i_player).Value + value_win
+    
+   Else
+    n_player = n_player + 1
+    Worksheets(5).Range("A" & n_player).Value = Player
+    Worksheets(5).Range("B" & n_player).Value = 1
+    Worksheets(5).Range("C" & n_player).Value = wager
+    Worksheets(5).Range("D" & n_player).Value = value_win
+   End If
+   
+   
+   ' ------------------------------------------------- All_Bets ------------------------------------------------
+   
+    
+     dBankroll = dBankroll - value_win + wager
+     BetVolume = BetVolume + wager
+    
+    Worksheets(2).Range("A" & 1 + i_bets - Start_Watch).Value = wager
+    Worksheets(2).Range("B" & 1 + i_bets - Start_Watch).Value = -value_win
+    Worksheets(2).Range("C" & 1 + i_bets - Start_Watch).Value = dBankroll
+    Worksheets(2).Range("D" & 1 + i_bets - Start_Watch).Value = BetVolume / 37 ' Average Profit
+    Worksheets(2).Range("E" & 1 + i_bets - Start_Watch).Value = BetVolume
+    
+   
+   ' ---------------------------------------------- Player_Bets ---------------------------------------------
+   
+   If Player_Watch = Player Then
+   
+    i_player_watch = i_player_watch + 1
+    
+     Player_dBankroll = Player_dBankroll - value_win + wager
+     Player_BetVolume = Player_BetVolume + wager
+    
+    Worksheets(3).Range("A" & 1 + i_player_watch).Value = -wager
+    Worksheets(3).Range("B" & 1 + i_player_watch).Value = value_win
+    Worksheets(3).Range("C" & 1 + i_player_watch).Value = -Player_dBankroll
+    Worksheets(3).Range("D" & 1 + i_player_watch).Value = -Player_BetVolume / 37 ' Average Profit
+    Worksheets(3).Range("E" & 1 + i_player_watch).Value = Player_BetVolume
+ 
+   End If
+   
+  End If
+  End If
+ 
+ Loop
+ 
+ Close #1
+ 
+ 
+ '------------------------------------------ player ------------------------------------
+ Application.ScreenUpdating = True
+ Worksheets(1).Range("F5").Value = "Wait ..."
+ DoEvents
+ Application.ScreenUpdating = False
+ 
+ 'sort by ...
+ For i = 1 To n_player
+   For i2 = 1 To n_player - 1
+    If Worksheets(5).Range("C" & i2).Value < Worksheets(5).Range("C" & i2 + 1).Value Then
+     hilf1 = Worksheets(5).Range("A" & i2).Value
+     hilf2 = Worksheets(5).Range("B" & i2).Value
+     hilf3 = Worksheets(5).Range("C" & i2).Value
+     hilf4 = Worksheets(5).Range("D" & i2).Value
+     Worksheets(5).Range("A" & i2).Value = Worksheets(5).Range("A" & i2 + 1).Value
+     Worksheets(5).Range("B" & i2).Value = Worksheets(5).Range("B" & i2 + 1).Value
+     Worksheets(5).Range("C" & i2).Value = Worksheets(5).Range("C" & i2 + 1).Value
+     Worksheets(5).Range("D" & i2).Value = Worksheets(5).Range("D" & i2 + 1).Value
+     Worksheets(5).Range("A" & i2 + 1).Value = hilf1
+     Worksheets(5).Range("B" & i2 + 1).Value = hilf2
+     Worksheets(5).Range("C" & i2 + 1).Value = hilf3
+     Worksheets(5).Range("D" & i2 + 1).Value = hilf4
+    End If
+   Next i2
+ Next i
+
+
+'-------------------------------------------- charts scaling --------------------------------
+DoEvents
+
+  With Worksheets(2).ChartObjects("Diagramm 1").Chart.Axes(xlValue, xlPrimary)
+    .MaximumScale = Worksheets(2).Range("G1").Value
+    .MinimumScale = -Worksheets(2).Range("G1").Value
+    '.MajorUnit = ActiveSheet.Range("C16").Value
+  End With
+  With Worksheets(2).ChartObjects("Diagramm 1").Chart.Axes(xlValue, xlSecondary)
+    .MaximumScale = Worksheets(2).Range("N1").Value
+    .MinimumScale = -Worksheets(2).Range("N1").Value
+    '.MajorUnit = ActiveSheet.Range("C16").Value
+  End With
+  len_data = Worksheets(2).Range("I1").Value
+  Worksheets(2).ChartObjects("Diagramm 1").Chart.SetSourceData Source:=Worksheets(2).Range("A1:E" & len_data)
+  
+  With Worksheets(3).ChartObjects("Diagramm 1").Chart.Axes(xlValue, xlPrimary)
+    .MaximumScale = Worksheets(3).Range("G1").Value
+    .MinimumScale = -Worksheets(3).Range("G1").Value
+  End With
+
+  len_data = Worksheets(3).Range("I1").Value
+  Worksheets(3).ChartObjects("Diagramm 1").Chart.SetSourceData Source:=Worksheets(3).Range("A1:D" & len_data)
+
+ Application.ScreenUpdating = True
+ Worksheets(1).Range("F5").Value = "Done !"
+
+End Sub
